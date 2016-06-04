@@ -12,6 +12,13 @@ models are possible. The individual residuals are combined,
 and a fake power-law continuum is added based on the average
 parameters from all the infividual fits.
 
+Usage:
+./j3combine.py -p PREFIX observations_list
+
+or
+./j3combine.py -o output observations_list
+
+
  TO-DO:
 - Include an option to define the obspath
 - Make the code to create the logs folder if it doesn't exist
