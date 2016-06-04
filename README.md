@@ -1,4 +1,4 @@
-# j3combie
+# j3combine
 Combination procedure for RXTE spectra
 
 Combination procedure designed by J. Garcia, J. Steiner,
