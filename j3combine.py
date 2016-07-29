@@ -29,6 +29,7 @@ from astropy.io import fits as pyfits
 from astropy.time import Time
 import time
 from datetime import datetime
+import numpy
 # ------------------------------------------------------------------------------
 # regrid data set
 #
@@ -204,7 +205,6 @@ for tmpfile in files:
       print 'Error: response file',specfile,'does not exist!'
       print 'Aborting...'
       sys.exit()
-    # Here I need to set the response file for the combined spectrum
 
     #Background
     backfile=hdulist[1].header['backfile']
@@ -237,7 +237,7 @@ for tmpfile in files:
     m1 = AllModels(1)
 
     m1(1).values = "1 -1"    # Constant
-    m1(2).values = "0.7 -1"  # nH
+    m1(2).values = "3 -1"    # nH
     m1(3).values = "1.5 1"   # Gamma
     m1(4).values = "1. 1"    # Normalization
 
@@ -328,8 +328,25 @@ for i in range(len(energies)):
    csig.append((cdata[i]+(soet/baet)*cback[i]+(soet/baet)**2.*cback[i])**0.5)
 
 # Average Gamma, Normalization and times (to be used to create fake continuum)
-avgGamma = [sum(x)/len(gammas) for x in zip(*gammas)]
-avgNorm = [sum(x)/len(norms) for x in zip(*norms)]
+#avgGamma = [sum(x)/len(gammas) for x in zip(*gammas)]
+#avgNorm = [sum(x)/len(norms) for x in zip(*norms)]
+
+# First get all the Gamma in a single array
+sgamma=[]
+for ga in gammas:
+  sgamma.append(ga[0])
+
+snorm=[]
+for no in norms:
+  snorm.append(no[0])
+
+# Use median instead of average
+avgGamma = numpy.average(numpy.array(sgamma))
+avgNorm = numpy.average(numpy.array(snorm))
+#avgGamma = numpy.median(numpy.array(sgamma))
+#avgNorm = numpy.median(numpy.array(snorm))
+
+# Total times
 totsource = sum(sotimes)
 totback = sum(batimes)
 
@@ -341,15 +358,13 @@ os.chdir(obspath)
 # Define the Model
 m1 = Model("tbabs*pow")
 
-m1(1).values = "0.7 -1"               # nH
-m1(2).values = str(avgGamma[0])+" 1"  # Gamma
-m1(3).values = str(avgNorm[0])+" 1"   # Normalization
+m1(1).values = "3. -1"                # nH
+m1(2).values = str(avgGamma)+" 1"     # Gamma
+m1(3).values = str(avgNorm)+" 1"      # Normalization
 
 #response, arf, background, exposure, correction, backExposure, fileName
-#fs1 = FakeitSettings(str(refresponse),"",str(refbackground),str(totsource),1.,str(totback),"fake-pca.pha")
-# Not sure if I need to simulate the backgorund!!!
 fs1 = FakeitSettings(refresponse,"","",totsource,1.,0.,"fake-pca.pha")
-AllData.fakeit(1, fs1)
+AllData.fakeit(1, fs1, applyStats=False)
 
 s1 = AllData(1)
 Plot.xAxis = "keV"
